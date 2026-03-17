@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Beschrijf.nl — AI Productbeschrijvingen</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --cream: #F8F5F0;
+      --dark: #1A1814;
+      --mid: #6B6760;
+      --accent: #C8873A;
+      --accent-light: #F5E8D8;
+      --border: rgba(26,24,20,0.12);
+      --white: #FFFFFF;
+    }
+    body { background: var(--cream); color: var(--dark); font-family: 'DM Sans', sans-serif; font-weight: 300; min-height: 100vh; }
+    header { padding: 2rem 2rem 0; display: flex; justify-content: space-between; align-items: center; max-width: 900px; margin: 0 auto; }
+    .logo { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--dark); }
+    .logo span { color: var(--accent); }
+    .tagline-header { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; color: var(--mid); }
+    .hero { max-width: 900px; margin: 0 auto; padding: 5rem 2rem 3rem; }
+    .hero-label { font-size: 11px; text-transform: uppercase; letter-spacing: 3px; color: var(--accent); margin-bottom: 1.2rem; }
+    h1 { font-family: 'DM Serif Display', serif; font-size: clamp(38px, 6vw, 64px); line-height: 1.05; color: var(--dark); margin-bottom: 1.5rem; letter-spacing: -1px; }
+    h1 em { font-style: italic; color: var(--accent); }
+    .hero-sub { font-size: 17px; color: var(--mid); max-width: 460px; line-height: 1.7; }
+    .main-card { max-width: 900px; margin: 0 auto 4rem; padding: 0 2rem; display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: var(--border); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+    .form-side { background: var(--white); padding: 2.5rem; }
+    .result-side { background: var(--dark); padding: 2.5rem; display: flex; flex-direction: column; }
+    .section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--mid); margin-bottom: 1.5rem; }
+    .result-side .section-label { color: rgba(255,255,255,0.4); }
+    .field { margin-bottom: 1.2rem; }
+    label { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--mid); margin-bottom: 6px; }
+    input, select { width: 100%; padding: 10px 14px; font-size: 15px; font-family: 'DM Sans', sans-serif; font-weight: 300; border: 1px solid var(--border); border-radius: 8px; background: var(--cream); color: var(--dark); outline: none; transition: border-color 0.2s; }
+    input:focus, select:focus { border-color: var(--accent); background: #fff; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .btn { width: 100%; margin-top: 1.5rem; padding: 14px; font-size: 14px; font-family: 'DM Sans', sans-serif; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; background: var(--accent); color: #fff; border: none; border-radius: 8px; cursor: pointer; transition: opacity 0.2s, transform 0.1s; }
+    .btn:hover { opacity: 0.88; }
+    .btn:active { transform: scale(0.99); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .result-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 12px; padding: 2rem 0; }
+    .result-empty-icon { width: 48px; height: 48px; border: 1px solid rgba(255,255,255,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .result-empty p { font-size: 14px; color: rgba(255,255,255,0.3); max-width: 200px; line-height: 1.6; }
+    .result-text { flex: 1; font-size: 16px; line-height: 1.8; color: rgba(255,255,255,0.9); display: none; }
+    .result-actions { margin-top: 1.5rem; display: none; gap: 10px; }
+    .btn-ghost { padding: 10px 18px; font-size: 13px; font-family: 'DM Sans', sans-serif; font-weight: 400; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; background: transparent; color: rgba(255,255,255,0.7); cursor: pointer; transition: background 0.2s; }
+    .btn-ghost:hover { background: rgba(255,255,255,0.07); }
+    .loader { display: none; flex: 1; align-items: center; justify-content: center; }
+    .dots { display: flex; gap: 8px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: bounce 1.2s infinite; }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-10px); opacity: 1; } }
+    .error-msg { display: none; margin-top: 1rem; padding: 10px 14px; font-size: 13px; border-radius: 8px; background: #fdecea; color: #c0392b; border: 1px solid #f5c6c2; }
+    footer { text-align: center; padding: 2rem; font-size: 13px; color: var(--mid); }
+    @media (max-width: 640px) { .main-card { grid-template-columns: 1fr; } .row { grid-template-columns: 1fr; } h1 { font-size: 36px; } }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">beschrijf<span>.</span>nl</div>
+  <div class="tagline-header">AI voor webshops</div>
+</header>
+
+<section class="hero">
+  <p class="hero-label">Gratis proberen</p>
+  <h1>Productbeschrijvingen<br>die <em>verkopen</em></h1>
+  <p class="hero-sub">Vul je product in, klik op genereren — en krijg binnen 5 seconden een professionele beschrijving die klanten overtuigt.</p>
+</section>
+
+<div class="main-card">
+  <div class="form-side">
+    <p class="section-label">Jouw product</p>
+    <div class="field">
+      <label>Productnaam *</label>
+      <input id="naam" type="text" placeholder="bv. Katoenen T-shirt basic wit" />
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Categorie</label>
+        <select id="cat">
+          <option>Kleding & Mode</option>
+          <option>Elektronica</option>
+          <option>Wonen & Interieur</option>
+          <option>Beauty & Verzorging</option>
+          <option>Sport & Fitness</option>
+          <option>Voeding & Dranken</option>
+          <option>Speelgoed & Kids</option>
+          <option>Overig</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Toon</label>
+        <select id="toon">
+          <option>Professioneel</option>
+          <option>Vriendelijk & Warm</option>
+          <option>Luxe & Exclusief</option>
+          <option>Speels & Luchtig</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Kenmerken (komma's)</label>
+      <input id="kenmerken" type="text" placeholder="bv. 100% katoen, unisex, 5 kleuren" />
+    </div>
+    <div class="field">
+      <label>Doelgroep (optioneel)</label>
+      <input id="doelgroep" type="text" placeholder="bv. jonge vrouwen 20–35 jaar" />
+    </div>
+    <button class="btn" id="genBtn" onclick="genereer()">Genereer beschrijving →</button>
+    <div class="error-msg" id="fout"></div>
+  </div>
+
+  <div class="result-side">
+    <p class="section-label">Resultaat</p>
+    <div class="result-empty" id="emptyState">
+      <div class="result-empty-icon">✦</div>
+      <p>Vul je product in en klik op genereren</p>
+    </div>
+    <div class="loader" id="loader">
+      <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    </div>
+    <p class="result-text" id="resultTekst"></p>
+    <div class="result-actions" id="acties">
+      <button class="btn-ghost" onclick="kopieer()">Kopieer</button>
+      <button class="btn-ghost" onclick="opnieuw()">Opnieuw</button>
+    </div>
+  </div>
+</div>
+
+<footer>Aangedreven door Claude AI &nbsp;·&nbsp; Gebouwd voor Nederlandse webshops</footer>
+
+<script>
+async function genereer() {
+  const naam = document.getElementById('naam').value.trim();
+  if (!naam) { toonFout('Vul eerst een productnaam in.'); return; }
+  const btn = document.getElementById('genBtn');
+  btn.disabled = true; btn.textContent = 'Genereren...';
+  document.getElementById('fout').style.display = 'none';
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('resultTekst').style.display = 'none';
+  document.getElementById('acties').style.display = 'none';
+  document.getElementById('loader').style.display = 'flex';
+  try {
+    const res = await fetch('/api/genereer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        naam,
+        categorie: document.getElementById('cat').value,
+        toon: document.getElementById('toon').value,
+        kenmerken: document.getElementById('kenmerken').value.trim(),
+        doelgroep: document.getElementById('doelgroep').value.trim()
+      })
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) { toonFout(data.error || 'Er ging iets mis.'); reset(btn); return; }
+    document.getElementById('resultTekst').textContent = data.beschrijving;
+    document.getElementById('resultTekst').style.display = 'block';
+    document.getElementById('acties').style.display = 'flex';
+  } catch (e) { toonFout('Verbindingsfout: ' + e.message); }
+  reset(btn);
+}
+function toonFout(msg) {
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('emptyState').style.display = 'flex';
+  const el = document.getElementById('fout'); el.textContent = msg; el.style.display = 'block';
+}
+function reset(btn) {
+  document.getElementById('loader').style.display = 'none';
+  btn.disabled = false; btn.textContent = 'Genereer beschrijving →';
+}
+function kopieer() {
+  navigator.clipboard.writeText(document.getElementById('resultTekst').textContent).then(() => {
+    const b = document.querySelectorAll('.btn-ghost')[0];
+    b.textContent = 'Gekopieerd!';
+    setTimeout(() => b.textContent = 'Kopieer', 2000);
+  });
+}
+function opnieuw() {
+  document.getElementById('resultTekst').style.display = 'none';
+  document.getElementById('acties').style.display = 'none';
+  document.getElementById('emptyState').style.display = 'flex';
+  genereer();
+}
+</script>
+</body>
+</html>
